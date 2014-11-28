@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="6dp" >
+
+    <TextView
+            android:id="@+id/title_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="Title: "
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+            android:id="@+id/description_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/title_item"
+            android:layout_below="@+id/title_item"
+            android:text="Desctiption: "
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+            android:id="@+id/longitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/description_item"
+            android:layout_below="@+id/description_item"
+            android:text="Longitude: "
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+            android:id="@+id/latitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/longitude"
+            android:layout_below="@+id/longitude"
+            android:text="Latitude: "
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+            android:id="@+id/lngt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/longitude"
+            android:layout_alignBottom="@+id/longitude"
+            android:layout_toRightOf="@+id/description_item"
+            android:text="TextView" />
+
+    <TextView
+            android:id="@+id/latd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/latitude"
+            android:layout_alignBottom="@+id/latitude"
+            android:layout_alignLeft="@+id/lngt"
+            android:layout_toRightOf="@id/description_item"
+            android:text="TextView" />
+
+    <TextView
+            android:id="@+id/dsc_i"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/longitude"
+            android:layout_toRightOf="@+id/description_item"
+            android:text="TextView" />
+
+    <TextView
+            android:id="@+id/title_i"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/description_item"
+            android:layout_alignLeft="@+id/dsc_i"
+            android:text="TextView" />
+
+</RelativeLayout>
