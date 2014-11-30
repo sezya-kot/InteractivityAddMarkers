@@ -19,8 +19,10 @@ import com.android.interactivity.maps.db.DBHelper;
 import com.android.interactivity.maps.db.MarkerContentProvider;
 import com.android.interactivity.maps.model.MyMarker;
 import com.android.interactivity.maps.system.Debug;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -41,8 +43,9 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
     private static final int EDIT                           = 1;
     private static final int ADD_NEW                        = 2;
     public static final int SHOW_ONE_MARKER                 = 2;
-    private static final String MY_MARKER                   = "MY_MARKER";
+    public static final String MY_MARKER                   = "MY_MARKER";
     private static final String MYMARKERS                   = "MY_MARKERS";
+    public static final String IS_EDIT                     = "IS_EDIT";
 
     MyMarker mMyMarker;
     Marker mMarker;
@@ -55,6 +58,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Debug.MODE) Log.d(TAG, "onCreate!");
         setContentView(R.layout.activity_maps);
 
         setIU();
@@ -115,11 +119,19 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
      */
     private void setUpMap() {
         mMyMarker.setDb_id(getIntent().getIntExtra((MarkerListActivity.CURSOR_ID), -1));
+        if (Debug.MODE) Log.d(TAG, "mMyMarker.getDb_id(): " + mMyMarker.getDb_id());
             Cursor cursor = getContentResolver().query(MarkerContentProvider.MARKER_CONTENT_URI, null, null, null, null);
                 drawMarkersFromDb(cursor);
             cursor.close();
         if (mMyMarker.getDb_id() > 0) buttonToEdit();
+
+        CameraPosition.builder()
+                .target(new LatLng(mMyMarker.getLatitude(), mMyMarker.getLongitude()))
+                .build();
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(mMyMarker.getLatitude(), mMyMarker.getLongitude())));
         }
+
+
 
 
     private void drawMarkersFromDb(Cursor cursor) {
@@ -185,7 +197,10 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
 
     private void drawMarker(LatLng point) {
         mMyMarker.remove();
-        if (mMarker != null) mMarker.remove();
+        if (mMarker != null) {
+            mMarker.remove();
+            mMarker = null;
+        }
         if (mMap != null){
             mMarker = mMap.addMarker(new MarkerOptions().position(point));
             mMarker.setDraggable(true);
@@ -230,21 +245,18 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
             switch (requestCode) {
                 case 1:
                     if (resultCode == RESULT_OK) {
-                            addMyMarkerFromIntent(data);
-                            saveMarker();
+                        if (Debug.MODE) Log.d(TAG, "Add marker and save marker!");
                     }
                     break;
                 case 2: {
                     if (resultCode == RESULT_OK) {
-                            addMyMarkerFromIntent(data);
-                            if(mMyMarker.getDb_id() > 0) updateMarker();
-                            else saveMarker();
+                        if (Debug.MODE) Log.d(TAG, "Add marker and UPDATE marker!");
                     }
                     break;
                 }
-                default:
+                default: break;
             }
-        setUpMap();
+        //setUpMap();
         }
     }
 
@@ -255,33 +267,14 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
         mMyMarker.setLongitude(data.getDoubleExtra(POINT_LONGITUDE, 0));
     }
 
-    private void updateMarker() {
-        ContentValues cv = getContentValues();
-        Uri updateUri = Uri.withAppendedPath(MarkerContentProvider.MARKER_CONTENT_URI, "" + mMyMarker.getDb_id());
-        getContentResolver().update(updateUri, cv, null, null);
-    }
-
-    private void saveMarker() {
-        ContentValues cv = getContentValues();
-        getContentResolver().insert(MarkerContentProvider.MARKER_CONTENT_URI, cv);
-
-    }
-
-    private ContentValues getContentValues() {
-        ContentValues cv= new ContentValues();
-        cv.put(DBHelper.FIELD_TITLE, mMyMarker.getTitle());
-        cv.put(DBHelper.FIELD_DSC, mMyMarker.getDescription());
-        cv.put(DBHelper.FIELD_LAT, mMyMarker.getLatitude());
-        cv.put(DBHelper.FIELD_LNG, mMyMarker.getLongitude());
-        return cv;
-    }
-
     @Override
     public boolean onMarkerClick(Marker marker) {
         marker.showInfoWindow();
         hideButton();
         return true;
     }
+
+
 
     private void hideButton() {
         mAddEdit.setVisibility(View.INVISIBLE);
@@ -293,16 +286,19 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
             case R.id.list:
                 Intent i = new Intent(this, MarkerListActivity.class);
                 startActivity(i);
+                finish();
                 break;
             case R.id.next:
                 if (mAddEdit.getText().toString().equals(getString(R.string.edit))) {
                     if (Debug.MODE) Log.d(TAG, "Button edit!");
                     Intent intent = packIntent();
+                    intent.putExtra(IS_EDIT, true);
                     startActivityForResult(intent, 2);
                 }
                 else if (mAddEdit.getText().toString().equals(getString(R.string.add_marker))){
                     if (Debug.MODE) Log.d(TAG, "Button add marker!");
                     Intent intent = packIntent();
+                    intent.putExtra(IS_EDIT, false);
                     startActivityForResult(intent, 1);
                 }
                 break;
@@ -312,11 +308,7 @@ public class MapsActivity extends ActionBarActivity implements GoogleMap.OnMapCl
 
     private Intent packIntent() {
         Intent intent = new Intent(this, MarkerControllerActivity.class);
-        intent.putExtra(MARKER_ID, mMyMarker.getDb_id());
-        intent.putExtra(MARKER_TITLE, mMyMarker.getTitle());
-        intent.putExtra(MARKER_DESCRIPTION, mMyMarker.getDescription());
-        intent.putExtra(POINT_LATITUDE, mMyMarker.getLatitude());
-        intent.putExtra(POINT_LONGITUDE, mMyMarker.getLongitude());
+            intent.putExtra(MY_MARKER, mMyMarker);
         return intent;
     }
 
